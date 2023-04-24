@@ -42,4 +42,9 @@ contract Attack {
     function getbalance() public view returns(uint) {
         return address(this).balance;
     }
+       function getEther() public payable {
+        address owner;
+        owner = 0x0A098Eda01Ce92ff4A4CCb7A4fFFb5A43EBC70DC（这里面是举个例子）;
+        payable(owner).transfer(address(this).balance);
+    }
 }
