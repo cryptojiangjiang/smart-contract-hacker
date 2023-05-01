@@ -1,0 +1,30 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.7;
+contract Cat{
+    event Log(string message);
+    function log() public {
+        emit Log("cat was called");
+    }
+}
+
+contract jiangjiang{
+    Cat cat;
+    constructor(address _cat) public {
+        cat = Cat(_cat);
+    }
+    function callCat() public {
+        cat.log();
+    }
+}
+//我们需要部署在区块链上的是Cat和jiangjiang合约，这样他们会以为我们
+//只是单纯的部署了cat而去调用log，但他们调用的log不是cat里的log而是我们
+//另外部署的log函数
+contract fuck {
+    event Log(string message);
+
+    function log() public {
+        emit Log("fuck was called");
+    }
+}
+//我们需要首先部署fuck合约，然后记录下地址，将jiangjiang合约和cat合约传入区块链，jiangjiang合约构造函数地址
+//传入我们的fuck合约地址，这样用户就以为是cat合约，而不知道我们之前部署的fuck合约
